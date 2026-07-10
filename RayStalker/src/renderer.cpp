@@ -18,6 +18,26 @@ static uint32_t ConvertToRGBA(const glm::vec4& color)
 	return result;
 }
 
+static uint32_t PCG_Hash(uint32_t input)
+{
+	uint32_t state = input * 747796405u + 2891336453u;
+	uint32_t word = ((state >> ((state >> 28u) + 4u)) ^ state) * 277803737u;
+	return (word >> 22u) ^ word;
+}
+
+static float RandomFloat(uint32_t& seed)
+{
+	seed = PCG_Hash(seed);
+	return static_cast<float>(seed) / static_cast<float>(std::numeric_limits<uint32_t>::max());
+}
+
+static glm::vec3 InUnitSphere(uint32_t seed)
+{
+	return glm::normalize(glm::vec3(
+	     RandomFloat(seed) * 2.0f - 1.0f,
+		RandomFloat(seed) * 2.0f - 1.0f,
+		RandomFloat(seed) * 2.0f - 1.0f));
+}
 
 void Renderer::OnResize(uint32_t width, uint32_t height)
 {
@@ -123,45 +143,39 @@ glm::vec4 Renderer::PerPixel(uint32_t x, uint32_t y)
 	ray.direction = m_ActiveCamera->GetRayDirections()
 		[x + y * m_FinalImage->GetWidth()];
 
-	glm::vec3 color(0.0f);
-	float multiplier{ 1.0f };
+	glm::vec3 light(0.0f);
+	glm::vec3 throughput{ 1.0f };
 
+	uint32_t seed{ x + y * m_FinalImage->GetWidth() };
+	seed *= m_FrameIndex;
 
 	const int bounces{ 5 };
 	for (int i{ 0 }; i < bounces; ++i)
 	{
+		seed += i;
 		auto payload{ TraceRay(ray) };
 		if (payload.HitDistance < 0.0f) {
 			glm::vec3 skyColor = glm::vec3{ 0.6f,0.7f,0.9f };
-			color += skyColor * multiplier;
+			//light += skyColor * throughput;
 			break;
 		}
-
-		// Light source
-		glm::vec3 lightDir{ glm::normalize(glm::vec3(-1.0f,-1.0f,-1.0f)) };
-		// If theta >90 then gives 0
-		float candela{ glm::max(glm::dot(payload.WorldNormal,-lightDir),0.0f) }; //cos(theta) [0,1]
 
 		const Sphere& sphere{ m_ActiveScene->Spheres[payload.ObjectIndex] };
 		const Material& material{ m_ActiveScene->Materials[sphere.MaterialIndex] };
 
-		// Calculate where the ray hits the sphere
-		// glm::vec3 sphereColor{ 0.7f,0.3f,0.9f };
-		auto sphereColor{ material.Albedo };
-		// sphereColor = normal * 0.5f + 0.5f; // -1*0.5+0.5=0 so color range now [0,1]
-		sphereColor *= candela;
-		color += sphereColor * multiplier;
-		multiplier *= 0.5f;
+		// Absorbing color wavelength
+		throughput *= material.Albedo;
+		light += material.GetEmission();
 
 		// cast new from hitPoint(a bit forward so we don't collide with same ray)
 		ray.origin = payload.WorldPosition + payload.WorldNormal * 0.0001f;
 		// Reflection based on roughness
 		// the rougher the surface the more shift in direction
-		ray.direction = glm::reflect(ray.direction, payload.WorldNormal
-			+ material.roughness * Walnut::Random::Vec3(-0.5f, 0.5f));
+		// Bias it toward world normal
+		ray.direction = glm::normalize(payload.WorldNormal + InUnitSphere(seed));
 	}
 
-	return glm::vec4(color, 1.0f);
+	return glm::vec4(light, 1.0f);
 }
 
 
