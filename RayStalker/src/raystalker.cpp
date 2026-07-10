@@ -8,7 +8,6 @@
 #include "scene.hpp"
 #include <glm/gtc/type_ptr.hpp>
 
-
 class SceneLayer : public Walnut::Layer
 {
 public:
