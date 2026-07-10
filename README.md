@@ -1,9 +1,7 @@
 #                                           Raystalker
 
 A multi-threaded Raytracing using C++ , Walnut GUI framework.
-
-It's currenlty a reference for learning Ray tracing. When done with maths, will do a complete overhaul.
-
+It has partial Pathtracing which will get more sophisticated overtime.
 
 ## Gallery
 
@@ -41,5 +39,6 @@ It can work with other toolchain , but you'll have to manually set build system.
 
 
 ## TODO
-1. Option to save scene.
-2. IDK something something.
+1. Option for ray bounce control
+2. Option to save scene.
+3. IDK something something.
