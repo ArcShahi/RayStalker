@@ -42,3 +42,8 @@ It can work with other toolchain , but you'll have to manually set build system.
 1. Option for ray bounce control
 2. Option to save scene.
 3. IDK something something.
+
+
+### Reference
+- Ray tracing in one weekend 
+- The Cherno YT 
