@@ -39,14 +39,17 @@ void Renderer::OnResize(uint32_t width, uint32_t height)
 	delete[] m_ImageData;
 	m_ImageData = new uint32_t[width * height];
 
+	delete[] m_AccumulationData;
+	m_AccumulationData = new glm::vec4[width * height];
+
 	m_ImageHorizontalIter.resize(width);
 	m_ImageVerticalIter.resize(height);
 
-/*	for (uint32_t i{ 0 }; i < width; ++i)
-		m_ImageHorizontalIter[i] = i;
-	for (uint32_t i{ 0 }; i < height; ++i)
-		m_ImageVerticalIter[i] = i;
-	*/
+	/*	for (uint32_t i{ 0 }; i < width; ++i)
+			m_ImageHorizontalIter[i] = i;
+		for (uint32_t i{ 0 }; i < height; ++i)
+			m_ImageVerticalIter[i] = i;
+		*/
 	std::iota(begin(m_ImageHorizontalIter), end(m_ImageHorizontalIter), 0);
 	std::iota(begin(m_ImageVerticalIter), end(m_ImageVerticalIter), 0);
 }
@@ -58,26 +61,40 @@ void Renderer::Render(const Scene& scene, const Camera& camera)
 	m_ActiveScene = &scene;
 	m_ActiveCamera = &camera;
 
+	if (m_FrameIndex == 1)
+		memset(m_AccumulationData, 0, m_FinalImage->GetWidth() * m_FinalImage->GetHeight()
+			* sizeof(glm::vec4));
+
 	// std::thread::hardware_concurrency();
 #define MULTI_THREAD 1
 #if MULTI_THREAD 
+
 	std::for_each(std::execution::par,
-		begin(m_ImageVerticalIter), end(m_ImageVerticalIter), 
+		begin(m_ImageVerticalIter), end(m_ImageVerticalIter),
 		[this](uint32_t y)
 		{
-		std::for_each(std::execution::par,
-			begin(m_ImageHorizontalIter), end(m_ImageHorizontalIter),
-			[this,y](uint32_t x) 
-			{
-				glm::vec4 color = PerPixel(x, y);
-				// clamp in range [0,1]
-				color = glm::clamp(color, glm::vec4(0.f), glm::vec4(1.f));
-				m_ImageData[x + y * m_FinalImage->GetWidth()] = ConvertToRGBA(color);
 
-			});
+			std::for_each(std::execution::par,
+				begin(m_ImageHorizontalIter), end(m_ImageHorizontalIter),
+				[this, y](uint32_t x)
+				{
+
+					glm::vec4 color = PerPixel(x, y);
+					// Accumualte color
+					m_AccumulationData[x + y * m_FinalImage->GetWidth()] += color;
+					glm::vec4 accumulatedColor = m_AccumulationData
+						[x + y * m_FinalImage->GetWidth()];
+					accumulatedColor /= static_cast<float>(m_FrameIndex);
+					// clamp in range [0,1]
+					accumulatedColor = glm::clamp(accumulatedColor,
+						glm::vec4(0.f), glm::vec4(1.f));
+					m_ImageData[x + y * m_FinalImage->GetWidth()] =
+						ConvertToRGBA(accumulatedColor);
+
+				});
 		});
 #else
-	// Left to right and then top to bottom
+		// Left to right and then top to bottom
 	for (uint32_t y{ 0 }; y < m_FinalImage->GetHeight(); ++y)
 	{
 		for (uint32_t x{ 0 }; x < m_FinalImage->GetWidth(); ++x)
@@ -90,8 +107,13 @@ void Renderer::Render(const Scene& scene, const Camera& camera)
 		}
 
 	}
-#endif
+	#endif
 	m_FinalImage->SetData(m_ImageData);
+
+	if (m_Settings.Accumulate)
+		++m_FrameIndex;
+	else
+		m_FrameIndex = 1;
 }
 
 glm::vec4 Renderer::PerPixel(uint32_t x, uint32_t y)
@@ -136,7 +158,7 @@ glm::vec4 Renderer::PerPixel(uint32_t x, uint32_t y)
 		// Reflection based on roughness
 		// the rougher the surface the more shift in direction
 		ray.direction = glm::reflect(ray.direction, payload.WorldNormal
-			+material.roughness*Walnut::Random::Vec3(-0.5f,0.5f));
+			+ material.roughness * Walnut::Random::Vec3(-0.5f, 0.5f));
 	}
 
 	return glm::vec4(color, 1.0f);
@@ -186,45 +208,6 @@ Renderer::HitPayload Renderer::TraceRay(const Ray& ray)
 	 then we check if it collides with our mathematically defined sphere ?
 	 If yes then we color the pixel
 
-	 Sphere centered at origin : x^2+y^2+z^2=r^2
-	 Sphere be at an arbitrary point C(x,y,z) then our sphere equation
-
-	 (x-i)^2+(y-j)^2+(z-k)^2=r^2
-
-	 Sphere origin vector C[x,y,z] and our Circle is at vector P[i,j,k]
-	 then vector from P to C = (C - P)
-
-	 and (C-P)·(C-P) =  (x-a)^2+(y-b)^2+(z-c)^2
-	 => (C-P)·(C-P)=r^2
-
-	 Any point P that satisfies this equation is on sphere
-
-	 Our Ray P(t)= A + Dt
-
-	 We wanna know if our ray hits our sphere, if it does then there's some 't'
-	 that satisfies that sphere equation
-
-	 so (C-P(t) · (C-P(t)=r^2
-	 => (C-A+Dt) · (C-A+Dt)=r^2
-	 => (D·D)t^2  - 2D(C-A)t  + (C-A) · (C-A) - r^2 = 0
-
-	 Quadratic formula :  (-b (+-) sqrt(b^2 - 4ac ))/2a
-
-	 a = D · D  : Ray direction dot Ray Direction
-	 b = -2D·(C-A) : -2  times Ray direction dot Sphere origin - Ray Origin
-	 c = (Sphere oring - Ray origin dot Sphere Origin - Ray Origin) - radius * radius
-
-	 dot(v,v) = ||v||^2
-
-	 a = ||D||^2
-	 c = ||(C-A)||^2
-
-	 b has a factor of -2 , b=-2h then
-
-	 Quadratic Eqn : (h (+-) sqrt(h^2-ac))/a
-
-	 then b=-2h => h = b / -2
-	 => h =  D · (C-Q)
 	 */
 
 	 // camera : ray originates from camera, -z means forward
@@ -240,7 +223,7 @@ Renderer::HitPayload Renderer::TraceRay(const Ray& ray)
 		const Sphere& sphere{ m_ActiveScene->Spheres[i] };
 		// Arbitrary origin of sphere, Vector from Point P to Center 
 		const auto oc{ sphere.position - ray.origin };
-		const float a{glm::dot(ray.direction,ray.direction)};
+		const float a{ glm::dot(ray.direction,ray.direction) };
 		const float h{ glm::dot(ray.direction, oc) };
 		const float c{ glm::dot(oc,oc) - sphere.radius * sphere.radius };
 
@@ -257,7 +240,7 @@ Renderer::HitPayload Renderer::TraceRay(const Ray& ray)
 		// [[maybe_unused]] const float t0{ (h + sqrtd) / a };
 		const float closeT{ (h - sqrtd) / a };
 
-		if (closeT >0.0f && closeT < hitDistance)
+		if (closeT > 0.0f && closeT < hitDistance)
 		{
 			hitDistance = closeT;
 			closestSphere = static_cast<int>(i);
