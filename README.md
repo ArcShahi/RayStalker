@@ -7,11 +7,15 @@ It's currenlty a reference for learning Ray tracing. When done with maths, will 
 
 ## Gallery
 
-| |
-| |
-| |                                              
-| | 
-| |
+![Red_Blue](gallery/4.png)
+
+----
+
+![Red_Planet](gallery/3.png)
+
+----
+
+![Metal](gallery/0.png)
 
 ## Setup
 
@@ -34,3 +38,8 @@ It can work with other toolchain , but you'll have to manually set build system.
 
 >[!Warning]
 > I've modified `Walnut/Random.hpp` , `Walnut/Random.cpp` to add `thread_local` in `s_RandomEngine`, so every thread get's it's own Random engine. It reduces random number generation.
+
+
+## TODO
+1. Option to save scene.
+2. IDK something something.
