@@ -138,13 +138,14 @@ void Renderer::Render(const Scene& scene, const Camera& camera)
 		m_FrameIndex = 1;
 }
 
-void Renderer::SaveScene(std::string& filename)
+void Renderer::SaveScene(const char* filename)
 {
-	if (!filename.ends_with(".png"))
-		filename += ".png";
 
+	// Our image data assumes row 0 to be bottom row  of image
+	// stbi assumes row 0 to be top row of image
+	stbi_flip_vertically_on_write(1);
 	stbi_write_png(
-		filename.c_str(),
+		filename,
 		m_FinalImage->GetWidth(),
 		m_FinalImage->GetHeight(),
 		4,

@@ -77,6 +77,12 @@ public:
 			m_Renderer.ResetFrameIndex();
 		}
 		
+		char filename[16] = "output.png";
+		ImGui::InputText("Filename", filename, sizeof(filename));
+		if (ImGui::Button("Save scene"))
+		{
+			m_Renderer.SaveScene(filename);
+		}
 
 		ImGui::End();
 

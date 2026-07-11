@@ -26,7 +26,7 @@ public:
 	std::shared_ptr<Walnut::Image> GetFinalImage()const { return m_FinalImage; }
 	void ResetFrameIndex() { m_FrameIndex = 1; }
 	Settings& GetSettings() { return m_Settings; }
-	void SaveScene(std::string& filename);
+	void SaveScene(const char* filename);
 private:
 
 	struct HitPayload
