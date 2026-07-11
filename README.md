@@ -34,7 +34,8 @@ With screen resolution 1980 x 1080
 ### Prerequisites
 
 - Vulkan SDK
-- Visual studio 26 ( Recommmended)
+- Visual studio 22+ ( Recommmended)
+- `stb_image_write.h`
 
 It can work with other toolchain , but you'll have to manually set build system. 
 
@@ -47,6 +48,11 @@ It can work with other toolchain , but you'll have to manually set build system.
 
 # It'll generate VISUAL STUDIO solution file : Raystalker.slnx
 ```
+
+[Download](https://github.com/nothings/stb/blob/master/stb_image_write.h) and add `stb_image_write.h` to `RayStalker\include\stb_image_write.h` and reload the solution.
+
+Press Ctrl + F5 to run the executable. 
+
 
 >[!Warning]
 > I've modified `Walnut/Random.hpp` , `Walnut/Random.cpp` to add `thread_local` in `s_RandomEngine`, so every thread get's it's own Random engine. It reduces random number generation.
