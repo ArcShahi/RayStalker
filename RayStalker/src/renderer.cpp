@@ -36,7 +36,7 @@ static float RandomFloat(uint32_t& seed)
 static glm::vec3 InUnitSphere(uint32_t seed)
 {
 	return glm::normalize(glm::vec3(
-	     RandomFloat(seed) * 2.0f - 1.0f,
+		RandomFloat(seed) * 2.0f - 1.0f,
 		RandomFloat(seed) * 2.0f - 1.0f,
 		RandomFloat(seed) * 2.0f - 1.0f));
 }
@@ -67,30 +67,22 @@ void Renderer::OnResize(uint32_t width, uint32_t height)
 	m_ImageHorizontalIter.resize(width);
 	m_ImageVerticalIter.resize(height);
 
-	/*	for (uint32_t i{ 0 }; i < width; ++i)
-			m_ImageHorizontalIter[i] = i;
-		for (uint32_t i{ 0 }; i < height; ++i)
-			m_ImageVerticalIter[i] = i;
-		*/
 	std::iota(begin(m_ImageHorizontalIter), end(m_ImageHorizontalIter), 0);
 	std::iota(begin(m_ImageVerticalIter), end(m_ImageVerticalIter), 0);
 }
-
-
 
 void Renderer::Render(const Scene& scene, const Camera& camera)
 {
 	m_ActiveScene = &scene;
 	m_ActiveCamera = &camera;
 
-	if (m_FrameIndex == 1)
-		memset(m_AccumulationData, 0, m_FinalImage->GetWidth() * m_FinalImage->GetHeight()
-			* sizeof(glm::vec4));
+	if  (m_FrameIndex == 1)
+	{
+		memset(m_AccumulationData, 0,
+			m_FinalImage->GetWidth() * m_FinalImage->GetHeight() * sizeof(glm::vec4));
+	}
 
-	// std::thread::hardware_concurrency();
-#define MULTI_THREAD 1
-#if MULTI_THREAD 
-
+	// Left to right and then top to bottom
 	std::for_each(std::execution::par,
 		begin(m_ImageVerticalIter), end(m_ImageVerticalIter),
 		[this](uint32_t y)
@@ -115,27 +107,9 @@ void Renderer::Render(const Scene& scene, const Camera& camera)
 
 				});
 		});
-#else
-		// Left to right and then top to bottom
-	for (uint32_t y{ 0 }; y < m_FinalImage->GetHeight(); ++y)
-	{
-		for (uint32_t x{ 0 }; x < m_FinalImage->GetWidth(); ++x)
-		{
-			PerPixel(x, y);
-			glm::vec4 color = PerPixel(x, y);
-			// clamp in range [0,1]
-			color = glm::clamp(color, glm::vec4(0.f), glm::vec4(1.f));
-			m_ImageData[x + y * m_FinalImage->GetWidth()] = ConvertToRGBA(color);
-		}
 
-	}
-	#endif
 	m_FinalImage->SetData(m_ImageData);
-
-	if (m_Settings.Accumulate)
-		++m_FrameIndex;
-	else
-		m_FrameIndex = 1;
+	m_FrameIndex = m_Settings.Accumulate ? m_FrameIndex + 1 : 1;
 }
 
 void Renderer::SaveScene(const char* filename)
@@ -170,7 +144,8 @@ glm::vec4 Renderer::PerPixel(uint32_t x, uint32_t y)
 	for (int i{ 0 }; i < m_Settings.Bounces; ++i)
 	{
 		seed += i;
-		auto payload{ TraceRay(ray) };
+
+		Renderer::HitPayload payload{ TraceRay(ray) };
 		if (payload.HitDistance < 0.0f) {
 			glm::vec3 skyColor = glm::vec3{ 0.6f,0.7f,0.9f };
 			//light += skyColor * throughput;
@@ -195,8 +170,6 @@ glm::vec4 Renderer::PerPixel(uint32_t x, uint32_t y)
 	return glm::vec4(light, 1.0f);
 }
 
-
-
 Renderer::HitPayload Renderer::ClosestHit
 (const Ray& ray, float hitDistance, int objectIndex)
 {
@@ -204,7 +177,6 @@ Renderer::HitPayload Renderer::ClosestHit
 	Renderer::HitPayload payload{};
 	payload.HitDistance = hitDistance;
 	payload.ObjectIndex = objectIndex;
-
 
 	const Sphere& closestSphere{ m_ActiveScene->Spheres[objectIndex] };
 
@@ -239,11 +211,9 @@ Renderer::HitPayload Renderer::TraceRay(const Ray& ray)
 	 then we check if it collides with our mathematically defined sphere ?
 	 If yes then we color the pixel
 
+	 camera : ray originates from camera, -z means forward, Ray passes through each pixel
+
 	 */
-
-	 // camera : ray originates from camera, -z means forward
-	 // Ray passes through each pixel 
-
 
 	// Only render the closest sphere which was hit
 	int closestSphere{ -1 };
@@ -277,6 +247,7 @@ Renderer::HitPayload Renderer::TraceRay(const Ray& ray)
 			closestSphere = static_cast<int>(i);
 		}
 	}
+
 
 	// Nothing was hit
 	if (closestSphere < 0)

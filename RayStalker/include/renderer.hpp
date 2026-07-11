@@ -3,13 +3,12 @@
 
 #include <Walnut/Image.h>
 #include <memory>
-#include <glm/vec2.hpp>
 #include <glm/vec4.hpp>
 #include "camera.hpp"
 #include "ray.hpp"
 #include "scene.hpp"
 #include <string>
-// The input will be some scene description,output is an image
+
 class Renderer
 {
 public:
@@ -20,9 +19,9 @@ public:
 	};
 public:
 	Renderer() = default;
+	void Render(const Scene& scene, const Camera& camera);
 	// Render every pixel that makes up our viewport
 	void OnResize(uint32_t width, uint32_t height);
-	void Render(const Scene& scene, const Camera& camera);
 	std::shared_ptr<Walnut::Image> GetFinalImage()const { return m_FinalImage; }
 	void ResetFrameIndex() { m_FrameIndex = 1; }
 	Settings& GetSettings() { return m_Settings; }
@@ -36,7 +35,9 @@ private:
 		float HitDistance{};
 		int ObjectIndex;
 	};
-	glm::vec4 PerPixel(uint32_t x,uint32_t y); // RayGen
+
+	// RayGen
+	glm::vec4 PerPixel(uint32_t x,uint32_t y);
 
 	// shoots a ray to particular point -> returns info about ray
 	HitPayload TraceRay(const Ray& ray);

@@ -1,6 +1,5 @@
 #include "Walnut/Application.h"
 #include "Walnut/EntryPoint.h"
-
 #include "Walnut/Image.h"
 #include "Walnut/Timer.h"
 #include "renderer.hpp"
@@ -67,12 +66,7 @@ public:
 		ImGui::Begin("Info");
 		ImGui::Text("Last render : %.3fms", m_rendertime);
 		ImGui::Text("FPS: %.1f", ImGui::GetIO().Framerate);
-
-		/*if (ImGui::Button("Render")) {
-			render();
-		}*/
-	
-
+		
 		ImGui::End();
 
 		ImGui::Begin("Scene");
@@ -84,12 +78,12 @@ public:
 			Material& material{ m_scene.Materials[i] };
 			ImGui::Text("Object %d", i + 1);
 			ImGui::DragFloat3("position", glm::value_ptr(sphere.position), 0.1f);
-			ImGui::DragFloat("radius", &sphere.radius, 0.1f, 0.0f, 500.f);
+			ImGui::DragFloat("radius", &sphere.radius, 0.01f, 0.0f, 500.f);
 			ImGui::ColorEdit3("albedo", glm::value_ptr(material.Albedo), 0.1f);
-			ImGui::DragFloat("roughness", &material.roughness, 0.02f, 0.0f, 1.0f);
-			ImGui::DragFloat("metallic", &material.metallic, 0.02f, 0.0f, 1.0f);
+			ImGui::DragFloat("roughness", &material.roughness, 0.01f, 0.0f, 1.0f);
+			ImGui::DragFloat("metallic", &material.metallic, 0.01f, 0.0f, 1.0f);
 			ImGui::ColorEdit3("emission color",
-				glm::value_ptr(material.EmissionColor), 0.1f);
+				glm::value_ptr(material.EmissionColor), 0.01f);
 			ImGui::DragFloat("emission power", &material.EmissionPower, 0.01f, 0.0f, 100.f);
 
 			ImGui::Separator();
@@ -98,18 +92,18 @@ public:
 
 		}
 
-		ImGui::DragInt("Bounces", &m_Renderer.GetSettings().Bounces, 1, 1, 50);
+		ImGui::DragInt("bounces", &m_Renderer.GetSettings().Bounces, 1, 1, 50);
 		ImGui::Separator();
-		ImGui::Checkbox("Accumulate", &m_Renderer.GetSettings().Accumulate);
-		if (ImGui::Button("Reset"))
+		ImGui::Checkbox("accumulate", &m_Renderer.GetSettings().Accumulate);
+		if (ImGui::Button("reset"))
 		{
 			m_Renderer.ResetFrameIndex();
 		}
 
 		ImGui::Separator();
 		char filename[16] = "output.png";
-		ImGui::InputText("Filename", filename, sizeof(filename));
-		if (ImGui::Button("Save scene"))
+		ImGui::InputText("filename", filename, sizeof(filename));
+		if (ImGui::Button("save scene"))
 		{
 			m_Renderer.SaveScene(filename);
 		}
