@@ -71,18 +71,7 @@ public:
 		/*if (ImGui::Button("Render")) {
 			render();
 		}*/
-		ImGui::Checkbox("Accumulate", &m_Renderer.GetSettings().Accumulate);
-		if (ImGui::Button("Reset"))
-		{
-			m_Renderer.ResetFrameIndex();
-		}
-		
-		char filename[16] = "output.png";
-		ImGui::InputText("Filename", filename, sizeof(filename));
-		if (ImGui::Button("Save scene"))
-		{
-			m_Renderer.SaveScene(filename);
-		}
+	
 
 		ImGui::End();
 
@@ -90,30 +79,40 @@ public:
 		for (size_t i{ 0 }; i < m_scene.Spheres.size(); ++i)
 		{
 			ImGui::PushID(static_cast<int>(i));
+
 			Sphere& sphere = m_scene.Spheres[i];
-			ImGui::DragFloat3("Position", glm::value_ptr(sphere.position), 0.1f);
-			ImGui::DragFloat("Radius", &sphere.radius, 0.1f,0.0f,500.f);
-			ImGui::DragInt("Material", &sphere.MaterialIndex, 1.0f, 0,
-				static_cast<int>(m_scene.Materials.size()-1));
-
-			ImGui::Separator();
-			ImGui::PopID();
-		}
-
-		for (size_t i{ 0 }; i < m_scene.Materials.size(); ++i)
-		{
-			ImGui::PushID(static_cast<int>(i));
 			Material& material{ m_scene.Materials[i] };
-			ImGui::ColorEdit3("Albedo", glm::value_ptr(material.Albedo), 0.1f);
-			ImGui::DragFloat("Roughness", &material.roughness, 0.02f, 0.0f, 1.0f);
-			ImGui::DragFloat("Metallic", &material.metallic, 0.02f, 0.0f, 1.0f);
-			ImGui::ColorEdit3("Emission Color",
+			ImGui::Text("Object %d", i + 1);
+			ImGui::DragFloat3("position", glm::value_ptr(sphere.position), 0.1f);
+			ImGui::DragFloat("radius", &sphere.radius, 0.1f, 0.0f, 500.f);
+			ImGui::ColorEdit3("albedo", glm::value_ptr(material.Albedo), 0.1f);
+			ImGui::DragFloat("roughness", &material.roughness, 0.02f, 0.0f, 1.0f);
+			ImGui::DragFloat("metallic", &material.metallic, 0.02f, 0.0f, 1.0f);
+			ImGui::ColorEdit3("emission color",
 				glm::value_ptr(material.EmissionColor), 0.1f);
-			ImGui::DragFloat("Emission Power", &material.EmissionPower, 0.01f, 0.0f, 100.f);
+			ImGui::DragFloat("emission power", &material.EmissionPower, 0.01f, 0.0f, 100.f);
+
 			ImGui::Separator();
 			ImGui::PopID();
+
+
 		}
+
 		ImGui::DragInt("Bounces", &m_Renderer.GetSettings().Bounces, 1, 1, 50);
+		ImGui::Separator();
+		ImGui::Checkbox("Accumulate", &m_Renderer.GetSettings().Accumulate);
+		if (ImGui::Button("Reset"))
+		{
+			m_Renderer.ResetFrameIndex();
+		}
+
+		ImGui::Separator();
+		char filename[16] = "output.png";
+		ImGui::InputText("Filename", filename, sizeof(filename));
+		if (ImGui::Button("Save scene"))
+		{
+			m_Renderer.SaveScene(filename);
+		}
 		ImGui::End();
 
 		// Fixed the black border between border
