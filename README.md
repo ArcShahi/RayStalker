@@ -65,6 +65,8 @@ Press Ctrl + F5 to run the executable.
 - Click on object's value and drag them to change.
 - Click 'Save scene' to save the image. Will be saved in solution directory.
 
+Pass `/SUBSYSTEM:WINDOWS` flag  to MSVC's linker to disable the console window.
+
 ## TODO
 1. Move to GPU
 3. IDK something something.
