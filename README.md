@@ -4,12 +4,12 @@ A multi-threaded Raytracing using C++ , Walnut GUI framework.
 It has partial Pathtracing which will get more sophisticated overtime.
 
 
-With 3 Sphere, 5 Ray bounces I get : ~40FPS on my CPU: **Intel(R) Core(TM) i5-10300H CPU @ 2.50GHz Cores:	4/8**. 
+With 3 Spheres, 5 Ray bounces I get : ~40FPS on my CPU: **Intel(R) Core(TM) i5-10300H CPU @ 2.50GHz Cores:	4/8**. 
 
 With screen resolution 1980 x 1080
 - 2,138,400 × 40= 85,536,000 pixel color calculation / second
 - 5 x 85,536,000 = 427,680,000 ray traces / second
-- 427,680,000 × 3 = 1,283,040,000 sphere intersection tests/second
+- 427,680,000 × 3 = 1,283,040,000 sphere intersection tests / second
 
 
 
@@ -63,6 +63,10 @@ It can work with other toolchain , but you'll have to manually set build system.
 1. Move to GPU
 3. IDK something something.
 
+
+## AI Policy
+AI usage for code generation and documentation is forbidden for this project.
+- Shahi ( *prefers natural stupidity over artifical intelligence*)
 
 ### Reference
 - Ray tracing in one weekend 
